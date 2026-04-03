@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PolicyIQ — Intelligent Policy Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0c10;--surface:#13141a;--surface2:#1c1e27;--surface3:#252730;--border:#2a2c38;--border2:#353848;--amber:#f0a500;--ag:rgba(240,165,0,.12);--ag2:rgba(240,165,0,.05);--teal:#2dd4bf;--td:rgba(45,212,191,.12);--red:#f87171;--rd:rgba(248,113,113,.12);--yellow:#fbbf24;--yd:rgba(251,191,36,.12);--green:#4ade80;--gd:rgba(74,222,128,.12);--text:#e8e9f0;--text2:#9a9db8;--text3:#5a5d78;--r:10px;--rs:6px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;z-index:999;backdrop-filter:blur(6px)}
+.modal-bg.hide{display:none}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:36px;width:540px;max-width:94vw;box-shadow:0 32px 80px rgba(0,0,0,.7)}
+.modal-logo{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.m-ico{width:32px;height:32px;background:var(--amber);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:700;font-size:16px;color:#0b0c10}
+.m-name{font-family:'Playfair Display',serif;font-size:20px;font-weight:700}.m-name span{color:var(--amber)}
+.modal h2{font-size:16px;font-weight:600;margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:18px}
+.modal-sub a{color:var(--amber);text-decoration:none}.modal-sub a:hover{text-decoration:underline}
+
+/* PROVIDER GRID */
+.provider-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px}
+.prov-card{padding:10px 12px;border-radius:var(--rs);border:1px solid var(--border2);background:var(--surface2);cursor:pointer;transition:all .2s;text-align:center}
+.prov-card:hover{border-color:var(--border);background:var(--surface3)}
+.prov-card.on{border-color:var(--amber);background:var(--ag)}
+.prov-icon{font-size:20px;margin-bottom:4px}
+.prov-name{font-size:12px;font-weight:600;color:var(--text2);display:block}
+.prov-card.on .prov-name{color:var(--amber)}
+.prov-free{font-size:10px;color:var(--green);font-weight:500;margin-top:2px;display:block}
+.prov-card.on .prov-free{color:rgba(74,222,128,.7)}
+
+/* MODAL FIELDS */
+.m-field{margin-bottom:14px}
+.m-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:7px;display:flex;align-items:center;justify-content:space-between}
+.m-label a{font-size:11px;font-weight:400;color:var(--amber);text-decoration:none;text-transform:none;letter-spacing:0}
+.m-label a:hover{text-decoration:underline}
+.inp-wrap{position:relative}
+.inp-wrap input,.m-input{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--rs);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;padding:10px 42px 10px 13px;outline:none;transition:border-color .2s;letter-spacing:.3px}
+.m-model-input{font-family:'DM Sans',sans-serif;letter-spacing:0;padding:10px 13px}
+.inp-wrap input:focus,.m-input:focus{border-color:var(--amber)}
+.eye{position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:14px;color:var(--text3);padding:0}
+.modal-hint{font-size:11px;color:var(--text3);margin-top:6px;margin-bottom:16px;line-height:1.5}
+.modal-err{font-size:12px;color:var(--red);margin-bottom:12px;display:none}
+.modal-err.show{display:block}
+.modal-actions{display:flex;gap:10px}
+
+/* PROVIDER INFO BOX */
+.prov-info{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--rs);padding:10px 13px;margin-bottom:14px;font-size:12px;color:var(--text2);line-height:1.6;display:none}
+.prov-info.show{display:block}
+.prov-info strong{color:var(--text);font-weight:600}
+
+/* KEY STATUS */
+.key-status{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;color:var(--text3);padding:4px 12px;border-radius:20px;border:1px solid var(--border);transition:all .2s;background:none;font-family:'DM Sans',sans-serif}
+.key-status:hover{border-color:var(--border2);color:var(--text2)}
+.key-status.ok{color:var(--green);border-color:rgba(74,222,128,.3)}
+.kdot{width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:background .2s}
+.key-status.ok .kdot{background:var(--green)}
+
+/* HEADER */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;height:62px;gap:20px;position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:10px}
+.l-ico{width:32px;height:32px;background:var(--amber);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:700;font-size:16px;color:#0b0c10}
+.l-name{font-family:'Playfair Display',serif;font-size:19px;font-weight:700}.l-name span{color:var(--amber)}
+.h-sub{font-size:11px;color:var(--text3);border-left:1px solid var(--border);padding-left:18px;letter-spacing:.5px;text-transform:uppercase}
+.h-badge{background:var(--ag2);border:1px solid rgba(240,165,0,.2);color:var(--amber);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;letter-spacing:.5px;font-family:'IBM Plex Mono',monospace}
+
+/* LAYOUT */
+.layout{display:flex;flex:1}
+.sidebar{width:210px;min-width:210px;background:var(--surface);border-right:1px solid var(--border);padding:24px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:62px;height:calc(100vh - 62px);overflow-y:auto}
+.sl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--text3);padding:0 8px;margin-bottom:4px;margin-top:10px}
+.sb{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:var(--rs);cursor:pointer;border:1px solid transparent;background:transparent;color:var(--text2);font-size:13px;font-weight:500;width:100%;text-align:left;transition:all .2s;font-family:'DM Sans',sans-serif}
+.sb:hover{background:var(--surface2);color:var(--text)}
+.sb.active{background:var(--ag);border-color:rgba(240,165,0,.25);color:var(--amber)}
+.sbi{width:26px;height:26px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.sb.active .sbi{background:var(--ag)}.sb:not(.active) .sbi{background:var(--surface3)}
+.sbt{flex:1}.sbs{font-size:10px;color:var(--text3);font-weight:400;display:block}
+.sdiv{height:1px;background:var(--border);margin:10px 0}
+.fw-list{padding:8px;font-size:11px;color:var(--text3);line-height:1.85}
+.sinfo{margin-top:auto;padding:10px;background:var(--ag2);border:1px solid rgba(240,165,0,.12);border-radius:var(--rs);font-size:11px;color:var(--text3);line-height:1.5}
+
+/* MAIN */
+.main{flex:1;padding:28px;overflow-y:auto;max-width:calc(100vw - 210px)}
+.module{display:none}.module.active{display:block}
+.page-hdr{margin-bottom:24px}
+.page-hdr h1{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;margin-bottom:5px}
+.page-hdr p{font-size:13.5px;color:var(--text2);line-height:1.6}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:18px}
+.card-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--amber);margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.card-title::before{content:'';width:3px;height:13px;background:var(--amber);border-radius:2px}
+
+/* INPUTS */
+.pta{width:100%;min-height:200px;background:var(--bg);border:1px solid var(--border2);border-radius:var(--rs);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.7;padding:14px;resize:vertical;outline:none;transition:border-color .2s}
+.pta:focus{border-color:var(--amber)}
+.pta::placeholder{color:var(--text3)}
+.fi,.fs{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--rs);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:9px 13px;outline:none;transition:border-color .2s}
+.fi:focus,.fs:focus{border-color:var(--amber)}
+.fs option{background:var(--surface)}
+.fl{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px;display:block}
+.two-inp{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* FW CHIPS */
+.fw-grid{display:flex;flex-wrap:wrap;gap:7px;margin-top:2px}
+.chip{padding:5px 12px;border-radius:20px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;user-select:none}
+.chip:hover{border-color:var(--amber);color:var(--text)}
+.chip.on{background:var(--ag);border-color:var(--amber);color:var(--amber);font-weight:600}
+
+/* PT GRID */
+.pt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px;margin-top:2px}
+.pt-card{padding:11px 13px;border-radius:var(--rs);border:1px solid var(--border2);background:var(--surface2);cursor:pointer;transition:all .2s}
+.pt-card:hover{border-color:var(--border)}
+.pt-card.on{background:var(--ag);border-color:var(--amber)}
+.pt-name{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:3px}
+.pt-desc{font-size:11px;color:var(--text3);line-height:1.4}
+.pt-card.on .pt-name{color:var(--amber)}.pt-card.on .pt-desc{color:rgba(240,165,0,.6)}
+
+/* BUTTONS */
+.bp{background:var(--amber);color:#0b0c10;border:none;padding:11px 24px;border-radius:var(--rs);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all .2s}
+.bp:hover{background:#ffc233;transform:translateY(-1px);box-shadow:0 4px 18px rgba(240,165,0,.25)}
+.bp:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.bs{background:var(--surface2);color:var(--text2);border:1px solid var(--border2);padding:10px 18px;border-radius:var(--rs);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s}
+.bs:hover{background:var(--surface3);color:var(--text);border-color:var(--border)}
+.btn-row{display:flex;gap:10px;align-items:center;margin-bottom:22px}
+.bh{font-size:12px;color:var(--text3)}
+
+/* LOADING */
+.loading{display:none;padding:44px 20px;text-align:center}
+.loading.show{display:block}
+.spin{width:38px;height:38px;border:3px solid var(--border);border-top-color:var(--amber);border-radius:50%;animation:spin .75s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.lt{font-size:14px;color:var(--text2);margin-bottom:4px}
+.ls{font-size:12px;color:var(--text3);font-family:'IBM Plex Mono',monospace}
+
+/* ERROR */
+.err{display:none;padding:11px 14px;border-radius:var(--rs);font-size:13px;margin-bottom:14px;background:var(--rd);border:1px solid rgba(248,113,113,.3);color:var(--red)}
+.err.show{display:block}
+
+/* RESULTS */
+.results{display:none}.results.show{display:block}
+
+/* SCORE */
+.score-grid{display:grid;grid-template-columns:155px 1fr;gap:14px;margin-bottom:18px}
+.score-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px;text-align:center;position:relative;overflow:hidden}
+.score-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--amber),var(--teal))}
+.sc-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--text3);margin-bottom:10px}
+.ring{width:92px;height:92px;margin:0 auto 10px;position:relative}
+.ring svg{transform:rotate(-90deg)}
+.rt{fill:none;stroke:var(--border);stroke-width:7}
+.rf{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke-dashoffset 1s ease}
+.rnum{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Playfair Display',serif;font-size:24px;font-weight:700}
+.rbadge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:10px;display:inline-block}
+.fw-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px 22px}
+.fwr{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.fwr:last-child{margin-bottom:0}
+.fwn{font-size:12px;color:var(--text2);width:130px;flex-shrink:0}
+.fwbg{flex:1;height:5px;background:var(--surface3);border-radius:3px;overflow:hidden}
+.fwb{height:100%;border-radius:3px;transition:width .9s ease}
+.fwp{font-size:11px;font-weight:600;width:34px;text-align:right;font-family:'IBM Plex Mono',monospace}
+
+/* EXEC */
+.exec{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:var(--r);padding:18px 22px;margin-bottom:18px}
+.exec-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--amber);margin-bottom:8px}
+.exec-text{font-size:13px;color:var(--text2);line-height:1.7}
+
+/* GAPS */
+.gaps-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.gaps-ttl{font-family:'Playfair Display',serif;font-size:18px}
+.sevleg{display:flex;gap:12px}
+.sevd{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3)}
+.sevd::before{content:'';width:7px;height:7px;border-radius:50%}
+.sevc::before{background:#ef4444}.sevh::before{background:var(--red)}.sevm::before{background:var(--yellow)}.sevl::before{background:var(--green)}
+.gap-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden;transition:border-color .15s}
+.gap-item:hover{border-color:var(--border2)}
+.gap-hdr{display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer}
+.gsbar{width:3px;height:34px;border-radius:2px;flex-shrink:0}
+.gmeta{flex:1}
+.gdomain{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
+.gfw{font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace}
+.gbadge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;padding:3px 8px;border-radius:4px}
+.gtog{font-size:14px;color:var(--text3);transition:transform .2s}
+.gap-item.open .gtog{transform:rotate(180deg)}
+.gap-body{display:none;padding:0 16px 14px 29px}
+.gap-item.open .gap-body{display:block}
+.gsl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:10px 0 5px}
+.gst{font-size:12.5px;color:var(--text2);line-height:1.6}
+.greq{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--teal);background:var(--td);padding:2px 8px;border-radius:4px;display:inline-block;margin-bottom:8px}
+.rec-box{background:var(--ag2);border:1px solid rgba(240,165,0,.18);border-radius:var(--rs);padding:9px 13px;margin-top:8px}
+.rec-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--amber);margin-bottom:4px}
+.rec-text{font-size:12.5px;color:var(--text2);line-height:1.6}
+
+/* TWO COL */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+.li{display:flex;gap:9px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--text2);line-height:1.5}
+.li:last-child{border-bottom:none}
+.lic{flex-shrink:0;font-size:13px;line-height:1.5}
+
+/* POLICY OUTPUT */
+.pout{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:30px 34px}
+.pmeta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--border)}
+.ptag{font-size:11px;font-weight:500;padding:3px 10px;border-radius:12px;background:var(--surface2);color:var(--text2);border:1px solid var(--border2)}
+.ptag.hl{background:var(--ag);color:var(--amber);border-color:rgba(240,165,0,.3)}
+.pbody{font-size:13.5px;line-height:1.8;color:var(--text2)}
+.pbody h1{font-family:'Playfair Display',serif;font-size:21px;font-weight:700;color:var(--text);margin-bottom:6px}
+.pbody h2{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--amber);margin-top:26px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--ag)}
+.pbody h3{font-size:14px;font-weight:600;color:var(--text);margin-top:16px;margin-bottom:7px}
+.pbody p{margin-bottom:11px}
+.pbody ul,.pbody ol{padding-left:18px;margin-bottom:11px}
+.pbody li{margin-bottom:5px}
+.pbody strong{color:var(--text);font-weight:600}
+.pbody table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:12px}
+.pbody th{background:var(--surface2);color:var(--text);padding:7px 11px;text-align:left;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;border:1px solid var(--border)}
+.pbody td{padding:7px 11px;border:1px solid var(--border);color:var(--text2);vertical-align:top}
+.pbody tr:nth-child(even) td{background:var(--surface2)}
+.pact{display:flex;gap:10px;margin-top:22px;padding-top:18px;border-top:1px solid var(--border)}
+
+/* MISC */
+.char-row{display:flex;align-items:center;gap:10px;margin-top:8px}
+.char-c{font-size:11px;color:var(--text3)}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+.toast{position:fixed;bottom:22px;right:22px;background:var(--surface);border:1px solid var(--amber);color:var(--amber);padding:9px 16px;border-radius:var(--rs);font-size:13px;font-weight:500;opacity:0;transform:translateY(8px);transition:all .3s;z-index:200;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.wm{position:fixed;bottom:10px;left:220px;font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;pointer-events:none}
+</style>
+</head>
+<body>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <div class="modal-logo">
+      <div class="m-ico">P</div>
+      <div class="m-name">Policy<span>IQ</span></div>
+    </div>
+    <h2>Connect your AI provider</h2>
+    <div class="modal-sub">Choose any provider below, paste your API key, and PolicyIQ will use it for all analysis and generation. Your key is stored in session memory only — never saved to disk.</div>
+
+    <!-- PROVIDER SELECTOR -->
+    <div class="provider-grid" id="prov-grid"></div>
+
+    <!-- PROVIDER INFO -->
+    <div class="prov-info" id="prov-info"></div>
+
+    <!-- KEY INPUT -->
+    <div class="m-field">
+      <div class="m-label">
+        <span>API Key</span>
+        <a href="#" id="get-key-link" target="_blank">Get free key →</a>
+      </div>
+      <div class="inp-wrap">
+        <input type="password" id="key-inp" placeholder="Paste your API key here..." autocomplete="off" onkeydown="if(event.key==='Enter')saveKey()">
+        <button class="eye" onclick="toggleEye()">👁</button>
+      </div>
+    </div>
+
+    <!-- MODEL INPUT -->
+    <div class="m-field">
+      <div class="m-label"><span>Model</span></div>
+      <input type="text" class="m-input m-model-input" id="model-inp" placeholder="Select a provider first...">
+    </div>
+
+    <div class="modal-hint">Key stored in sessionStorage — cleared automatically when you close this tab.</div>
+    <div class="modal-err" id="modal-err">⚠️ Please select a provider and enter an API key.</div>
+    <div class="modal-actions">
+      <button class="bp" onclick="saveKey()">Save &amp; continue</button>
+      <button class="bs" id="modal-cancel" onclick="closeModal()" style="display:none">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="logo">
+    <div class="l-ico">P</div>
+    <div class="l-name">Policy<span>IQ</span></div>
+  </div>
+  <div class="h-sub">Intelligent Policy Intelligence · Information Security</div>
+  <div class="h-badge">AI POWERED</div>
+  <button class="key-status" id="key-status" onclick="openModal()">
+    <div class="kdot"></div>
+    <span id="kstxt">Connect AI</span>
+  </button>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sl">Modules</div>
+    <button class="sb active" id="nav-gap" onclick="switchMod('gap')">
+      <div class="sbi">🔍</div>
+      <div class="sbt">Gap Analyzer<span class="sbs">Assess existing policy</span></div>
+    </button>
+    <button class="sb" id="nav-builder" onclick="switchMod('builder')">
+      <div class="sbi">🏗️</div>
+      <div class="sbt">Policy Builder<span class="sbs">Build from scratch</span></div>
+    </button>
+    <div class="sdiv"></div>
+    <div class="sl">Frameworks</div>
+    <div class="fw-list">ISO 27001:2022<br>NIST CSF 2.0<br>NIST SP 800-53 Rev 5<br>PCI-DSS v4.0<br>SOC 2 Type II<br>GDPR<br>DPDP Act (India)<br>RBI IT Framework<br>SEBI Cyber Framework<br>CIS Controls v8</div>
+    <div class="sdiv"></div>
+    <div class="sinfo">💡 Supports Gemini, Groq, Mistral, xAI, OpenRouter & Anthropic.</div>
+  </aside>
+
+  <main class="main">
+    <!-- GAP ANALYZER -->
+    <div class="module active" id="mod-gap">
+      <div class="page-hdr">
+        <h1>Policy Gap Analyzer</h1>
+        <p>Paste your existing information security policy, select the frameworks to benchmark against, and AI will identify gaps, missing controls, and deliver actionable recommendations.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Step 1 — paste your policy</div>
+        <textarea class="pta" id="gap-text" placeholder="Paste your information security policy, procedure, or standard here...&#10;&#10;Supports: Access Control Policy, IS Policy, IRP, Data Classification Policy, or any IS document."></textarea>
+        <div class="char-row">
+          <span class="char-c" id="gap-chars">0 characters</span>
+          <button class="bs" style="font-size:12px;padding:5px 13px" onclick="loadSample()">Load sample policy</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Step 2 — select frameworks</div>
+        <div class="fw-grid" id="gap-fw"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Step 3 — additional context (optional)</div>
+        <div class="two-inp">
+          <div>
+            <label class="fl">Organisation type</label>
+            <select class="fs" id="gap-org">
+              <option value="">Select...</option>
+              <option>Banking / BFSI</option><option>Fintech</option><option>IT / ITES</option>
+              <option>Healthcare</option><option>E-commerce</option><option>Telecom</option>
+              <option>NBFC</option><option>Government / PSU</option><option>General</option>
+            </select>
+          </div>
+          <div>
+            <label class="fl">Additional notes</label>
+            <input class="fi" id="gap-notes" type="text" placeholder="e.g. payment aggregator, stores PII...">
+          </div>
+        </div>
+      </div>
+      <div class="err" id="gap-err"></div>
+      <div class="btn-row">
+        <button class="bp" id="gap-btn" onclick="runGap()">🔍 Analyze policy</button>
+        <button class="bs" onclick="resetGap()">Reset</button>
+        <span class="bh">Takes 15–30 seconds</span>
+      </div>
+      <div class="loading" id="gap-load">
+        <div class="spin"></div>
+        <div class="lt">Analyzing your policy...</div>
+        <div class="ls" id="gap-sub">Reading policy structure</div>
+      </div>
+      <div class="results" id="gap-res">
+        <div class="score-grid">
+          <div class="score-card">
+            <div class="sc-lbl">Compliance score</div>
+            <div class="ring">
+              <svg width="92" height="92" viewBox="0 0 92 92">
+                <circle class="rt" cx="46" cy="46" r="38"/>
+                <circle class="rf" id="rfill" cx="46" cy="46" r="38" stroke-dasharray="238.8" stroke-dashoffset="238.8"/>
+              </svg>
+              <div class="rnum" id="rnum">0%</div>
+            </div>
+            <div class="rbadge" id="rbadge"></div>
+          </div>
+          <div class="fw-card">
+            <div class="card-title">Per-framework scores</div>
+            <div id="fw-bars"></div>
+          </div>
+        </div>
+        <div class="exec">
+          <div class="exec-lbl">Executive summary</div>
+          <div class="exec-text" id="exec-text"></div>
+        </div>
+        <div class="gaps-hdr">
+          <div class="gaps-ttl" id="gaps-ttl">Gap findings</div>
+          <div class="sevleg">
+            <div class="sevd sevc">Critical</div>
+            <div class="sevd sevh">High</div>
+            <div class="sevd sevm">Medium</div>
+            <div class="sevd sevl">Low</div>
+          </div>
+        </div>
+        <div id="gap-items"></div>
+        <div class="two-col" style="margin-top:14px">
+          <div class="card"><div class="card-title">✅ Policy strengths</div><div id="strengths"></div></div>
+          <div class="card"><div class="card-title">🎯 Priority actions</div><div id="priorities"></div></div>
+        </div>
+        <div class="btn-row" style="margin-top:4px">
+          <button class="bp" onclick="copyGap()">📋 Copy report</button>
+          <button class="bs" onclick="dlGap()">⬇ Download</button>
+          <button class="bs" onclick="resetGap()">🔄 New analysis</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- POLICY BUILDER -->
+    <div class="module" id="mod-builder">
+      <div class="page-hdr">
+        <h1>Policy Builder</h1>
+        <p>Select the type of information security policy you need, choose the frameworks it should align with, and AI will generate a complete, structured, compliant policy document from scratch.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Step 1 — choose policy type</div>
+        <div class="pt-grid" id="pt-grid"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Step 2 — align with frameworks</div>
+        <div class="fw-grid" id="builder-fw"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Step 3 — organisation context</div>
+        <div class="two-inp" style="margin-bottom:14px">
+          <div>
+            <label class="fl">Organisation name (optional)</label>
+            <input class="fi" id="b-org-name" type="text" placeholder="e.g. Acme Technologies Pvt. Ltd.">
+          </div>
+          <div>
+            <label class="fl">Organisation type</label>
+            <select class="fs" id="b-org-type">
+              <option value="">Select...</option>
+              <option>Banking / BFSI</option><option>Fintech</option><option>IT / ITES</option>
+              <option>Healthcare</option><option>E-commerce</option><option>Telecom</option>
+              <option>NBFC</option><option>Government / PSU</option><option>General</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="fl">Special requirements</label>
+          <input class="fi" id="b-notes" type="text" placeholder="e.g. include cloud security section, reference RBI circular, add MFA controls...">
+        </div>
+      </div>
+      <div class="err" id="b-err"></div>
+      <div class="btn-row">
+        <button class="bp" id="b-btn" onclick="runBuilder()">🏗️ Build policy</button>
+        <button class="bs" onclick="resetBuilder()">Reset</button>
+        <span class="bh">Takes 20–40 seconds</span>
+      </div>
+      <div class="loading" id="b-load">
+        <div class="spin"></div>
+        <div class="lt">Drafting your policy...</div>
+        <div class="ls" id="b-sub">Structuring sections</div>
+      </div>
+      <div class="results" id="b-res">
+        <div class="pout">
+          <div class="pmeta" id="pmeta"></div>
+          <div class="pbody" id="pbody"></div>
+          <div class="pact">
+            <button class="bp" onclick="copyPolicy()">📋 Copy policy</button>
+            <button class="bs" onclick="dlPolicy()">⬇ Download</button>
+            <button class="bs" onclick="resetBuilder()">🔄 Build another</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="wm">PolicyIQ v3.0 · Multi-Provider AI</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ══ PROVIDER DEFINITIONS ══
+const PROVIDERS = [
+  {
+    id: 'gemini',
+    name: 'Google Gemini',
+    icon: '🟦',
+    free: 'Free · No card needed',
+    model: 'gemini-2.5-flash',
+    placeholder: 'AIza...',
+    keyLink: 'https://aistudio.google.com/app/apikey',
+    info: '<strong>Google Gemini</strong> — Most generous free tier. Up to 1,000 requests/day, no credit card required. Get key at aistudio.google.com.',
+    type: 'gemini'
+  },
+  {
+    id: 'groq',
+    name: 'Groq',
+    icon: '⚡',
+    free: 'Free · Very fast',
+    model: 'llama-3.3-70b-versatile',
+    placeholder: 'gsk_...',
+    keyLink: 'https://console.groq.com/keys',
+    info: '<strong>Groq</strong> — Fastest free inference (1,000+ tokens/sec). Runs Llama 3.3 70B. Free tier, no card needed. Get key at console.groq.com.',
+    type: 'openai_compat',
+    baseUrl: 'https://api.groq.com/openai/v1/chat/completions'
+  },
+  {
+    id: 'mistral',
+    name: 'Mistral AI',
+    icon: '🌊',
+    free: 'Free · 1B tokens/mo',
+    model: 'mistral-large-latest',
+    placeholder: 'Paste Mistral key...',
+    keyLink: 'https://console.mistral.ai/api-keys',
+    info: '<strong>Mistral AI</strong> — Free Experiment plan: 1 billion tokens/month, no card required. Strong multilingual & coding models. Get key at console.mistral.ai.',
+    type: 'openai_compat',
+    baseUrl: 'https://api.mistral.ai/v1/chat/completions'
+  },
+  {
+    id: 'xai',
+    name: 'xAI (Grok)',
+    icon: '𝕏',
+    free: '$25 free credits',
+    model: 'grok-3-mini',
+    placeholder: 'xai-...',
+    keyLink: 'https://console.x.ai/',
+    info: '<strong>xAI Grok</strong> — $25 free sign-up credits + $150/month via data sharing program. Get key at console.x.ai.',
+    type: 'openai_compat',
+    baseUrl: 'https://api.x.ai/v1/chat/completions'
+  },
+  {
+    id: 'openrouter',
+    name: 'OpenRouter',
+    icon: '🔀',
+    free: 'Many free models',
+    model: 'meta-llama/llama-3.3-70b-instruct:free',
+    placeholder: 'sk-or-v1-...',
+    keyLink: 'https://openrouter.ai/keys',
+    info: '<strong>OpenRouter</strong> — Access 100s of models via one key. Several models are permanently free (Llama 3.3, Gemma, Mistral 7B). Get key at openrouter.ai.',
+    type: 'openai_compat',
+    baseUrl: 'https://openrouter.ai/api/v1/chat/completions'
+  },
+  {
+    id: 'anthropic',
+    name: 'Anthropic',
+    icon: '🔶',
+    free: '$5 starter credits',
+    model: 'claude-sonnet-4-20250514',
+    placeholder: 'sk-ant-api03-...',
+    keyLink: 'https://console.anthropic.com/settings/keys',
+    info: '<strong>Anthropic Claude</strong> — $5 free starter credits (no card for verification needed initially). Best quality for GRC tasks. Get key at console.anthropic.com.',
+    type: 'anthropic'
+  }
+];
+
+// ══ DATA ══
+const FWS=[{id:'iso27001',name:'ISO 27001:2022'},{id:'nist_csf',name:'NIST CSF 2.0'},{id:'nist_800',name:'NIST SP 800-53 Rev 5'},{id:'pci_dss',name:'PCI-DSS v4.0'},{id:'soc2',name:'SOC 2 Type II'},{id:'gdpr',name:'GDPR'},{id:'dpdp',name:'DPDP Act (India)'},{id:'rbi',name:'RBI IT Framework'},{id:'sebi',name:'SEBI Cyber Framework'},{id:'cis',name:'CIS Controls v8'}];
+const PTS=[{id:'isp',name:'Information Security Policy',desc:'Master IS policy, all domains'},{id:'acp',name:'Access Control Policy',desc:'Identity, auth & authorisation'},{id:'irp',name:'Incident Response Policy',desc:'Detection, response & recovery'},{id:'dcp',name:'Data Classification Policy',desc:'Data sensitivity tiers & handling'},{id:'bcp',name:'Business Continuity Policy',desc:'BCP/DR and resilience'},{id:'tprm',name:'Vendor / TPRM Policy',desc:'Third-party and supplier risk'},{id:'aup',name:'Acceptable Use Policy',desc:'Permitted use of IT resources'},{id:'crypto',name:'Cryptography Policy',desc:'Encryption & key management'},{id:'change',name:'Change Management Policy',desc:'ITSM change control'},{id:'asset',name:'Asset Management Policy',desc:'IT asset lifecycle'},{id:'vuln',name:'Vulnerability Management Policy',desc:'Patching, scanning, remediation'},{id:'ret',name:'Data Retention Policy',desc:'Data lifecycle & disposal'}];
+const SAMPLE=`ACCESS MANAGEMENT POLICY\nDocument ID: ISP-AMP-001 | Version: 1.2 | Effective Date: March 2024\nOwner: IT Department | Approved By: Head of IT\n\n1. PURPOSE\nThis policy defines the requirements for managing access to information systems, applications, and data assets of the organisation.\n\n2. SCOPE\nThis policy applies to all employees of the organisation who access IT systems. It covers all internal applications and network resources.\n\n3. ACCESS PROVISIONING\n3.1 New employees will be given access as required for their job role. The IT team will create accounts upon receiving HR approval.\n3.2 Access requests must be submitted via email to IT helpdesk. The manager should approve before IT provisions access.\n3.3 Users will be provided with a username and default password. Users are advised to change their password after first login.\n\n4. PASSWORD POLICY\n4.1 Passwords must be at least 8 characters in length.\n4.2 Passwords should be changed every 90 days.\n4.3 Users must not share their passwords with anyone.\n4.4 Passwords should contain a mix of letters and numbers.\n\n5. ACCESS REVIEWS\n5.1 Access rights will be reviewed once a year by the IT team.\n5.2 When an employee leaves, IT will disable their account within a reasonable timeframe after HR notification.\n\n6. PRIVILEGED ACCESS\n6.1 Administrator accounts are maintained by the IT team.\n6.2 IT administrators have access to all systems as required.\n6.3 Admin credentials are stored securely by the IT team.\n\n7. REMOTE ACCESS\n7.1 Employees may access systems remotely using the company VPN.\n7.2 Remote access is permitted for all employees who require it for work.\n\n8. THIRD PARTY ACCESS\n8.1 Third parties may be granted access when required. Access will be approved by IT management.\n\n9. USER RESPONSIBILITIES\n9.1 Users must keep their credentials confidential.\n9.2 Users must lock screens when leaving workstations.\n9.3 Users must report suspected unauthorised access to IT.\n\n10. POLICY REVIEW\nThis policy will be reviewed annually or when significant changes occur.`;
+
+// ══ STATE ══
+let selectedProvider = null;
+let apiKey = '';
+let modelName = '';
+let selPT = null, gapData = null, builtPol = '';
+
+// ══ MODAL ══
+function buildProviderGrid() {
+  document.getElementById('prov-grid').innerHTML = PROVIDERS.map(p => `
+    <div class="prov-card" id="pcard-${p.id}" onclick="selectProvider('${p.id}')">
+      <div class="prov-icon">${p.icon}</div>
+      <span class="prov-name">${p.name}</span>
+      <span class="prov-free">${p.free}</span>
+    </div>`).join('');
+}
+
+function selectProvider(id) {
+  selectedProvider = id;
+  document.querySelectorAll('.prov-card').forEach(c => c.classList.remove('on'));
+  document.getElementById('pcard-' + id).classList.add('on');
+  const p = PROVIDERS.find(x => x.id === id);
+  document.getElementById('key-inp').placeholder = p.placeholder;
+  document.getElementById('model-inp').value = p.model;
+  document.getElementById('get-key-link').href = p.keyLink;
+  const info = document.getElementById('prov-info');
+  info.innerHTML = p.info;
+  info.classList.add('show');
+  // restore saved key if any
+  const saved = sessionStorage.getItem('piq_key_' + id);
+  if (saved) document.getElementById('key-inp').value = saved;
+  else document.getElementById('key-inp').value = '';
+}
+
+function openModal() {
+  document.getElementById('modal-bg').classList.remove('hide');
+  if (apiKey) document.getElementById('modal-cancel').style.display = 'inline-flex';
+  if (selectedProvider) selectProvider(selectedProvider);
+}
+
+function closeModal() {
+  document.getElementById('modal-bg').classList.add('hide');
+}
+
+function saveKey() {
+  const key = document.getElementById('key-inp').value.trim();
+  const model = document.getElementById('model-inp').value.trim();
+  const errEl = document.getElementById('modal-err');
+  if (!selectedProvider) { errEl.textContent = '⚠️ Please select an AI provider first.'; errEl.classList.add('show'); return; }
+  if (!key) { errEl.textContent = '⚠️ Please enter your API key.'; errEl.classList.add('show'); return; }
+  if (!model) { errEl.textContent = '⚠️ Please enter a model name.'; errEl.classList.add('show'); return; }
+  errEl.classList.remove('show');
+  apiKey = key;
+  modelName = model;
+  sessionStorage.setItem('piq_key_' + selectedProvider, key);
+  sessionStorage.setItem('piq_provider', selectedProvider);
+  sessionStorage.setItem('piq_model', model);
+  closeModal();
+  const p = PROVIDERS.find(x => x.id === selectedProvider);
+  const ks = document.getElementById('key-status');
+  ks.classList.add('ok');
+  document.getElementById('kstxt').textContent = p.name + ' connected';
+}
+
+function toggleEye() {
+  const i = document.getElementById('key-inp'), b = document.querySelector('.eye');
+  if (i.type === 'password') { i.type = 'text'; b.textContent = '🙈'; }
+  else { i.type = 'password'; b.textContent = '👁'; }
+}
+
+function checkKey(eid) {
+  if (!apiKey || !selectedProvider) {
+    const e = document.getElementById(eid);
+    e.textContent = '⚠️ Please connect an AI provider first — click "Connect AI" in the top right.';
+    e.classList.add('show');
+    openModal();
+    return false;
+  }
+  return true;
+}
+
+// ══ UNIVERSAL AI CALL ══
+async function callAI(systemPrompt, userPrompt, maxTokens) {
+  const p = PROVIDERS.find(x => x.id === selectedProvider);
+  if (!p) throw new Error('No provider selected');
+
+  if (p.type === 'anthropic') {
+    return callAnthropic(systemPrompt, userPrompt, maxTokens);
+  } else if (p.type === 'gemini') {
+    return callGemini(systemPrompt, userPrompt, maxTokens);
+  } else {
+    return callOpenAICompat(p.baseUrl, systemPrompt, userPrompt, maxTokens);
+  }
+}
+
+async function callAnthropic(sys, usr, mt) {
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({ model: modelName, max_tokens: mt || 4000, system: sys, messages: [{ role: 'user', content: usr }] })
+  });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error?.message || 'Anthropic API error ' + r.status);
+  return d.content.map(b => b.text || '').join('');
+}
+
+async function callGemini(sys, usr, mt) {
+  const r = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: sys }] },
+        contents: [{ role: 'user', parts: [{ text: usr }] }],
+        generationConfig: { maxOutputTokens: mt || 4000 }
+      })
+    }
+  );
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error?.message || 'Gemini API error ' + r.status);
+  return d.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
+async function callOpenAICompat(baseUrl, sys, usr, mt) {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + apiKey
+  };
+  // OpenRouter requires these extra headers
+  if (baseUrl.includes('openrouter')) {
+    headers['HTTP-Referer'] = 'https://policyiq.app';
+    headers['X-Title'] = 'PolicyIQ';
+  }
+  const r = await fetch(baseUrl, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      model: modelName,
+      max_tokens: mt || 4000,
+      messages: [
+        { role: 'system', content: sys },
+        { role: 'user', content: usr }
+      ]
+    })
+  });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error?.message || 'API error ' + r.status);
+  return d.choices?.[0]?.message?.content || '';
+}
+
+// ══ INIT ══
+function init() {
+  buildProviderGrid();
+  ['gap-fw','builder-fw'].forEach((gid, i) => {
+    const pfx = i === 0 ? 'gfw' : 'bfw';
+    document.getElementById(gid).innerHTML = FWS.map(f =>
+      `<div class="chip" id="${pfx}-${f.id}" onclick="this.classList.toggle('on')">${f.name}</div>`).join('');
+  });
+  document.getElementById('pt-grid').innerHTML = PTS.map(p =>
+    `<div class="pt-card" id="pt-${p.id}" onclick="selPTFn('${p.id}')"><div class="pt-name">${p.name}</div><div class="pt-desc">${p.desc}</div></div>`).join('');
+  document.getElementById('gap-text').addEventListener('input', function() {
+    document.getElementById('gap-chars').textContent = this.value.length + ' characters';
+  });
+
+  // Restore session
+  const savedProvider = sessionStorage.getItem('piq_provider');
+  const savedModel = sessionStorage.getItem('piq_model');
+  if (savedProvider) {
+    const savedKey = sessionStorage.getItem('piq_key_' + savedProvider);
+    if (savedKey) {
+      selectedProvider = savedProvider;
+      apiKey = savedKey;
+      modelName = savedModel || PROVIDERS.find(p => p.id === savedProvider)?.model || '';
+      const p = PROVIDERS.find(x => x.id === savedProvider);
+      document.getElementById('key-status').classList.add('ok');
+      document.getElementById('kstxt').textContent = p.name + ' connected';
+      return;
+    }
+  }
+  openModal();
+}
+
+function selPTFn(id) {
+  document.querySelectorAll('.pt-card').forEach(c => c.classList.remove('on'));
+  document.getElementById('pt-' + id).classList.add('on');
+  selPT = id;
+}
+
+function getFWs(pfx) {
+  return FWS.filter(f => document.getElementById(pfx + '-' + f.id)?.classList.contains('on')).map(f => f.name);
+}
+
+function switchMod(m) {
+  document.querySelectorAll('.module').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.sb').forEach(x => x.classList.remove('active'));
+  document.getElementById('mod-' + m).classList.add('active');
+  document.getElementById('nav-' + m).classList.add('active');
+}
+
+function loadSample() {
+  document.getElementById('gap-text').value = SAMPLE;
+  document.getElementById('gap-chars').textContent = SAMPLE.length + ' characters';
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ══ ROBUST JSON PARSER ══
+function safeParseJSON(raw) {
+  // 1. Strip markdown fences
+  let text = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+
+  // 2. Extract the outermost { ... }
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start === -1 || end === -1) throw new Error('No JSON object found in the AI response. Try again.');
+  text = text.substring(start, end + 1);
+
+  // 3. Try direct parse first
+  try { return JSON.parse(text); } catch (_) {}
+
+  // 4. Fix unescaped control characters inside string values
+  // Replace literal newlines/tabs inside quoted strings with a space
+  text = text.replace(/"((?:[^"\\]|\\.)*)"/g, (match, inner) => {
+    const fixed = inner
+      .replace(/\n/g, ' ')
+      .replace(/\r/g, ' ')
+      .replace(/\t/g, ' ')
+      .replace(/\\/g, '\\\\')   // double-escape stray backslashes
+      .replace(/\\\\\"/g, '\\"') // but keep intentional escaped quotes
+      .replace(/[\x00-\x1F\x7F]/g, ' '); // strip other control chars
+    return '"' + fixed + '"';
+  });
+
+  // 5. Try again after cleaning
+  try { return JSON.parse(text); } catch (_) {}
+
+  // 6. Last resort: pull out individual fields with regex and rebuild
+  try {
+    const score = parseInt((text.match(/"overall_score"\s*:\s*(\d+)/) || [])[1]) || 50;
+    const summary = (text.match(/"executive_summary"\s*:\s*"([^"]{0,500})"/) || [])[1] || 'Analysis completed. Some formatting issues prevented full display — see gaps below.';
+
+    // Extract gaps array
+    const gapsMatch = text.match(/"gaps"\s*:\s*\[([\s\S]*?)\]\s*[,}]/);
+    const gaps = [];
+    if (gapsMatch) {
+      const gapItems = gapsMatch[1].match(/\{[^{}]*\}/g) || [];
+      gapItems.forEach(item => {
+        try {
+          const g = {};
+          ['domain','framework','requirement','current_state','gap','recommendation','severity'].forEach(k => {
+            const m = item.match(new RegExp(`"${k}"\\s*:\\s*"([^"]{0,400})"`));
+            if (m) g[k] = m[1];
+          });
+          if (g.domain || g.gap) gaps.push(g);
+        } catch(_) {}
+      });
+    }
+
+    const strengths = [...text.matchAll(/"strengths"\s*:\s*\[([^\]]*)\]/g)];
+    const strList = strengths.length ? (strengths[0][1].match(/"([^"]+)"/g) || []).map(s => s.replace(/"/g,'')) : [];
+    const priorities = [...text.matchAll(/"priority_actions"\s*:\s*\[([^\]]*)\]/g)];
+    const priList = priorities.length ? (priorities[0][1].match(/"([^"]+)"/g) || []).map(s => s.replace(/"/g,'')) : [];
+
+    if (gaps.length === 0) throw new Error('Could not extract gap findings from the response.');
+    return { overall_score: score, executive_summary: summary, framework_scores: {}, gaps, strengths: strList, priority_actions: priList };
+  } catch(fallbackErr) {
+    throw new Error('JSON parse failed after all recovery attempts. Please try again — this sometimes happens with certain models.');
+  }
+}
+
+// ══ GAP ANALYZER ══
+async function runGap() {
+  if (!checkKey('gap-err')) return;
+  const text = document.getElementById('gap-text').value.trim();
+  const fws = getFWs('gfw');
+  const org = document.getElementById('gap-org').value;
+  const notes = document.getElementById('gap-notes').value.trim();
+  const e = document.getElementById('gap-err');
+  e.classList.remove('show');
+  if (!text) { e.textContent = '⚠️ Please paste your policy text first.'; e.classList.add('show'); return; }
+  if (!fws.length) { e.textContent = '⚠️ Please select at least one framework.'; e.classList.add('show'); return; }
+
+  document.getElementById('gap-btn').disabled = true;
+  document.getElementById('gap-res').classList.remove('show');
+  document.getElementById('gap-load').classList.add('show');
+  const msgs = ['Reading policy structure...','Mapping controls to frameworks...','Identifying gaps...','Generating recommendations...','Scoring compliance levels...'];
+  let mi = 0;
+  const tick = setInterval(() => { document.getElementById('gap-sub').textContent = msgs[++mi % msgs.length]; }, 4000);
+
+  const sys = `You are a senior information security GRC consultant. Perform a thorough gap assessment of the provided policy document against the specified frameworks.
+
+CRITICAL FORMATTING RULES — you must follow these exactly:
+1. Respond ONLY with a single valid JSON object. No text before or after it.
+2. Do NOT use markdown code fences (no backticks).
+3. All string values must be on a single line — NO literal newlines inside strings. Use a space instead.
+4. Do NOT use special characters like tabs, unescaped quotes, or control characters inside strings.
+5. Keep each string value concise (under 300 characters).
+
+Use this exact JSON structure:
+{"overall_score":<0-100>,"executive_summary":"<single line summary, 2-3 sentences>","framework_scores":{"<framework name>":<0-100>},"gaps":[{"domain":"<domain>","framework":"<fw>","requirement":"<clause ref>","current_state":"<single line>","gap":"<single line>","recommendation":"<single line>","severity":"Critical|High|Medium|Low"}],"strengths":["<single line>"],"priority_actions":["<single line>"]}
+
+Generate 8-15 gaps covering multiple domains. Be specific with clause references.`;
+
+  const usr = `Assess against: ${fws.join(', ')}
+${org ? 'Org type: ' + org : ''}
+${notes ? 'Context: ' + notes : ''}
+
+POLICY:
+${text}`;
+
+  try {
+    const raw = await callAI(sys, usr, 4000);
+    clearInterval(tick);
+    const result = safeParseJSON(raw);
+    gapData = result;
+    renderGap(result, fws);
+  } catch(err) {
+    clearInterval(tick);
+    e.textContent = '⚠️ Analysis failed: ' + err.message + ' — Try clicking Analyze again, or switch to a different model.';
+    e.classList.add('show');
+  } finally {
+    document.getElementById('gap-btn').disabled = false;
+    document.getElementById('gap-load').classList.remove('show');
+  }
+}
+
+function renderGap(d, fws) {
+  const score = d.overall_score || 0;
+  const fc = score >= 75 ? '#4ade80' : score >= 50 ? '#fbbf24' : '#f87171';
+  const rf = document.getElementById('rfill');
+  rf.style.stroke = fc;
+  setTimeout(() => {
+    rf.style.strokeDashoffset = 238.8 - (score / 100) * 238.8;
+    document.getElementById('rnum').textContent = score + '%';
+  }, 80);
+  const b = document.getElementById('rbadge');
+  if (score >= 75) { b.textContent = 'Substantially compliant'; b.style.cssText = 'background:rgba(74,222,128,.15);color:#4ade80'; }
+  else if (score >= 50) { b.textContent = 'Partially compliant'; b.style.cssText = 'background:rgba(251,191,36,.15);color:#fbbf24'; }
+  else if (score >= 25) { b.textContent = 'Significant gaps'; b.style.cssText = 'background:rgba(248,113,113,.15);color:#f87171'; }
+  else { b.textContent = 'Non-compliant'; b.style.cssText = 'background:rgba(239,68,68,.15);color:#ef4444'; }
+
+  const barsEl = document.getElementById('fw-bars');
+  barsEl.innerHTML = '';
+  const fwsc = d.framework_scores || {};
+  fws.forEach(fw => {
+    const key = Object.keys(fwsc).find(k => k.toLowerCase().includes(fw.toLowerCase().split(' ')[0])) || fw;
+    const s = fwsc[key] || fwsc[fw] || 0;
+    const c = s >= 75 ? '#4ade80' : s >= 50 ? '#fbbf24' : '#f87171';
+    barsEl.innerHTML += `<div class="fwr"><div class="fwn">${fw}</div><div class="fwbg"><div class="fwb" style="width:0%;background:${c}" data-w="${s}"></div></div><div class="fwp">${s}%</div></div>`;
+  });
+  setTimeout(() => document.querySelectorAll('.fwb').forEach(b => b.style.width = b.dataset.w + '%'), 100);
+
+  document.getElementById('exec-text').textContent = d.executive_summary || '';
+  document.getElementById('gaps-ttl').textContent = `Gap findings (${(d.gaps||[]).length} identified)`;
+
+  const gi = document.getElementById('gap-items');
+  gi.innerHTML = '';
+  (d.gaps || []).forEach(g => {
+    const sev = (g.severity || '').toLowerCase();
+    const sc = sev === 'critical' ? '#ef4444' : sev === 'high' ? '#f87171' : sev === 'medium' ? '#fbbf24' : '#4ade80';
+    const sbg = sev === 'critical' ? 'rgba(239,68,68,.15)' : sev === 'high' ? 'rgba(248,113,113,.12)' : sev === 'medium' ? 'rgba(251,191,36,.12)' : 'rgba(74,222,128,.12)';
+    const item = document.createElement('div');
+    item.className = 'gap-item';
+    item.innerHTML = `<div class="gap-hdr" onclick="this.parentElement.classList.toggle('open')"><div class="gsbar" style="background:${sc}"></div><div class="gmeta"><div class="gdomain">${g.domain||'General'}</div><div class="gfw">${g.framework||''}</div></div><span class="gbadge" style="background:${sbg};color:${sc}">${g.severity||'Medium'}</span><span class="gtog">▼</span></div><div class="gap-body">${g.requirement?`<div class="greq">${g.requirement}</div>`:''}<div class="gsl">Current state</div><div class="gst">${g.current_state||'—'}</div><div class="gsl">Gap identified</div><div class="gst">${g.gap||'—'}</div><div class="rec-box"><div class="rec-lbl">Recommendation</div><div class="rec-text">${g.recommendation||'—'}</div></div></div>`;
+    gi.appendChild(item);
+  });
+
+  document.getElementById('strengths').innerHTML = (d.strengths||[]).map(s => `<div class="li"><span class="lic">✓</span><span>${s}</span></div>`).join('');
+  document.getElementById('priorities').innerHTML = (d.priority_actions||[]).map(a => `<div class="li"><span class="lic">→</span><span>${a}</span></div>`).join('');
+  document.getElementById('gap-res').classList.add('show');
+  document.getElementById('gap-res').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function resetGap() {
+  document.getElementById('gap-text').value = '';
+  document.getElementById('gap-chars').textContent = '0 characters';
+  document.getElementById('gap-notes').value = '';
+  document.getElementById('gap-org').value = '';
+  document.querySelectorAll('#gap-fw .chip').forEach(c => c.classList.remove('on'));
+  document.getElementById('gap-res').classList.remove('show');
+  document.getElementById('gap-err').classList.remove('show');
+  gapData = null;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function buildReport() {
+  if (!gapData) return '';
+  const d = gapData;
+  let t = `PolicyIQ Gap Analysis Report\n${'='.repeat(40)}\nProvider: ${selectedProvider} | Model: ${modelName}\n\nOverall Score: ${d.overall_score}%\n\nExecutive Summary\n${d.executive_summary}\n\nGaps (${(d.gaps||[]).length})\n${'-'.repeat(30)}\n`;
+  (d.gaps||[]).forEach((g,i) => { t += `\n[${i+1}] ${g.domain} | ${g.framework} | ${g.severity}\nRequirement: ${g.requirement}\nCurrent State: ${g.current_state}\nGap: ${g.gap}\nRecommendation: ${g.recommendation}\n`; });
+  t += `\nStrengths\n`; (d.strengths||[]).forEach(s => t += `• ${s}\n`);
+  t += `\nPriority Actions\n`; (d.priority_actions||[]).forEach(a => t += `→ ${a}\n`);
+  return t;
+}
+function copyGap() { const t = buildReport(); if (!t) return; navigator.clipboard.writeText(t).then(() => toast('✓ Report copied')); }
+function dlGap() { const t = buildReport(); if (!t) return; dl(t, 'PolicyIQ_Gap_Report.txt'); }
+
+// ══ POLICY BUILDER ══
+async function runBuilder() {
+  if (!checkKey('b-err')) return;
+  const fws = getFWs('bfw');
+  const orgName = document.getElementById('b-org-name').value.trim();
+  const orgType = document.getElementById('b-org-type').value;
+  const notes = document.getElementById('b-notes').value.trim();
+  const e = document.getElementById('b-err');
+  e.classList.remove('show');
+  if (!selPT) { e.textContent = '⚠️ Please select a policy type.'; e.classList.add('show'); return; }
+  if (!fws.length) { e.textContent = '⚠️ Please select at least one framework.'; e.classList.add('show'); return; }
+
+  const ptName = PTS.find(p => p.id === selPT)?.name || selPT;
+  document.getElementById('b-btn').disabled = true;
+  document.getElementById('b-res').classList.remove('show');
+  document.getElementById('b-load').classList.add('show');
+  const msgs2 = ['Structuring sections...','Mapping framework requirements...','Drafting control requirements...','Adding clause references...','Finalising document...'];
+  let mi2 = 0;
+  const tick2 = setInterval(() => { document.getElementById('b-sub').textContent = msgs2[++mi2 % msgs2.length]; }, 4500);
+
+  const sys = `You are a senior information security policy expert. Draft a complete, professionally structured ${ptName}.\n\nRequirements:\n- Comprehensive coverage of all relevant domains\n- Specific clause references to requested frameworks throughout\n- Formal enterprise policy language\n- Include: Purpose, Scope, Policy Statement, Definitions, Detailed Requirements, Roles & Responsibilities, Exceptions, Enforcement, Review Schedule, Related Documents\n- Include a compliance mapping table: | Requirement | Framework | Clause Reference |\n\nFormat with markdown: # title, ## sections, ### sub-sections, **bold** key terms, bullet and numbered lists, markdown tables.\nWrite the COMPLETE policy — do not truncate or summarise.`;
+  const usr = `Build a ${ptName} aligned with: ${fws.join(', ')}\n${orgName ? 'Organisation: ' + orgName : ''}\n${orgType ? 'Type: ' + orgType : ''}\n${notes ? 'Requirements: ' + notes : ''}`;
+
+  try {
+    const raw = await callAI(sys, usr, 4000);
+    clearInterval(tick2);
+    builtPol = raw;
+    renderPolicy(raw, ptName, fws, orgType);
+  } catch(err) {
+    clearInterval(tick2);
+    e.textContent = '⚠️ Build failed: ' + err.message;
+    e.classList.add('show');
+  } finally {
+    document.getElementById('b-btn').disabled = false;
+    document.getElementById('b-load').classList.remove('show');
+  }
+}
+
+function renderPolicy(md, ptName, fws, orgType) {
+  const p = PROVIDERS.find(x => x.id === selectedProvider);
+  let tags = `<span class="ptag hl">${ptName}</span>`;
+  fws.forEach(f => tags += `<span class="ptag">${f}</span>`);
+  if (orgType) tags += `<span class="ptag">${orgType}</span>`;
+  tags += `<span class="ptag">${p?.icon || ''} ${p?.name || ''}</span>`;
+  tags += `<span class="ptag">Generated ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}</span>`;
+  document.getElementById('pmeta').innerHTML = tags;
+
+  let html = md.replace(/^# (.+)$/gm,'<h1>$1</h1>').replace(/^## (.+)$/gm,'<h2>$1</h2>').replace(/^### (.+)$/gm,'<h3>$1</h3>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>');
+  html = html.replace(/(\|.+\|\n?)+/g, match => {
+    const lines = match.trim().split('\n').filter(l => !l.match(/^\|[-| :]+\|$/));
+    if (!lines.length) return match;
+    return '<table>' + lines.map((l,i) => { const cells = l.split('|').filter(c => c.trim() !== ''); const tag = i===0?'th':'td'; return '<tr>' + cells.map(c => `<${tag}>${c.trim()}</${tag}>`).join('') + '</tr>'; }).join('') + '</table>';
+  });
+  html = html.replace(/^[-*] (.+)$/gm,'<li>$1</li>').replace(/^\d+\. (.+)$/gm,'<li>$1</li>');
+  html = html.replace(/(<li>[\s\S]*?<\/li>)/g, m => `<ul>${m}</ul>`).replace(/<\/ul>\s*<ul>/g,'');
+  html = html.replace(/\n\n/g,'</p><p>');
+  html = '<p>' + html + '</p>';
+  ['h1','h2','h3','ul','table'].forEach(tag => {
+    html = html.replace(new RegExp(`<p>(<${tag}>)`,'g'),'$1').replace(new RegExp(`(</${tag}>)<\/p>`,'g'),'$1');
+  });
+  html = html.replace(/<p>\s*<\/p>/g,'');
+  document.getElementById('pbody').innerHTML = html;
+  document.getElementById('b-res').classList.add('show');
+  document.getElementById('b-res').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function resetBuilder() {
+  selPT = null;
+  document.querySelectorAll('.pt-card').forEach(c => c.classList.remove('on'));
+  document.querySelectorAll('#builder-fw .chip').forEach(c => c.classList.remove('on'));
+  document.getElementById('b-org-name').value = '';
+  document.getElementById('b-org-type').value = '';
+  document.getElementById('b-notes').value = '';
+  document.getElementById('b-res').classList.remove('show');
+  document.getElementById('b-err').classList.remove('show');
+  builtPol = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function copyPolicy() { if (!builtPol) return; navigator.clipboard.writeText(builtPol).then(() => toast('✓ Policy copied')); }
+function dlPolicy() {
+  if (!builtPol) return;
+  const n = PTS.find(p => p.id === selPT)?.name || 'Policy';
+  dl(builtPol, `PolicyIQ_${n.replace(/\s+/g,'_')}.txt`);
+}
+
+function dl(text, filename) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
+  a.download = filename;
+  a.click();
+}
+
+init();
+</script>
+</body>
+</html>
